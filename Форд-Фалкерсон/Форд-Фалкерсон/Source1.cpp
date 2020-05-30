@@ -7,8 +7,8 @@ using namespace std;
 
 int n; // количество вершин в графе
 int** g, ** gf; // g - граф, gf - его остаточная сеть
+int kol=0;// кол-во рёбер в разрезе
 
-//создание динамической матрицы размера n x n
 int** create_matrix(int& n) {
     int** a = new int* [n];
     for (int i = 0; i < n; ++i) {
@@ -19,7 +19,7 @@ int** create_matrix(int& n) {
     return a;
 }
 
-//удаление динамической матрицы размера n x n
+
 void delete_matrix(int& n, int** a) {
     for (int i = 0; i < n; ++i)
         delete[] a[i];//
@@ -67,18 +67,21 @@ int FordFulkerson(int& s, int& t) {
         f += cf;    //к общему потоку прибавляем найденный
     }
     delete[] p;
-    return f;   //возвращаем общий поток сети
+    return f;  
 }
 
-void minCut(int& s) {           //минимальный разрез
+void minCut(int& s, ofstream& gout) {           //минимальный разрез
     bool* used = new bool[n];   //массив посещённых вершин
     for (int u = 0; u < n; ++u) //сначала все они не посещены, поэтому все значения в false
         used[u] = false;
     DFS(s, used);   // находим все достижимые вершины из s
     for (int u = 0; u < n; ++u)
         for (int v = 0; v < n; ++v)
-            if (used[u] && !used[v] && g[u][v] > 0)     //если достижима u из s, но не достижима v,а ребро есть в исходном графе
-                cout << u << " - " << v << endl;    // то, эти рёбра и составляют минимальный разрез
+            if (used[u] && !used[v] && g[u][v] > 0)//если достижима u из s, но не достижима v,а ребро есть в исходном графе
+            {
+                kol++;
+                gout << u << " - " << v << endl;// то, эти рёбра и составляют минимальный разрез
+            }
     delete[] used;
 }
 
@@ -86,44 +89,59 @@ int main() {
     setlocale(LC_ALL, "rus");
     system("color 5F");
 
-    //ввод названия файла с клавиатуры
-    cout << "Введите название файла, в котором хранится граф: ";
-    string name_file;
-    getline(cin, name_file);
+    cout << "Введите название файла, в котором хранится граф(с .txt): ";
+    string name_file1;
+    getline(cin, name_file1);
 
-    ifstream fin(name_file);
-    fin >> n; // чтение с файла количества вершин
-    g = create_matrix(n);
+    string name_file2;
+    cout << "Введите название файла, в который необходимо вывести ответ(с .txt): ";
+    getline(cin, name_file2);
+    ofstream gout(name_file2);
 
-    // Чтение рёбер с файла и заполнение матрицы весами
-    while (!fin.eof()) {    // создание матрицы для графа
-        int i, j, k;
-        fin >> i >> j >> k;
-        g[i][j] = k;
+    ifstream fin(name_file1);
+    if (!(fin.is_open()) || !(gout.is_open())) {
+        cout << "Название файла некорректно" << endl;
     }
-    fin.close();
+    else {
+        fin >> n; // чтение с файла количества вершин
+        g = create_matrix(n);
 
-    int ans = INT_MAX;      //минимальный из максимальных потоков
-
-    for (int s = 0; s < n; ++s)
-        for (int t = s + 1; t < n; ++t) {
-            int flow = FordFulkerson(s, t); //поиск максимального потока из вершины s в вершину t
-            ans = min(ans, flow);   //выбор минимального из максимальных потоков
+        // Чтение рёбер с файла и заполнение матрицы весами
+        while (!fin.eof()) {    // создание матрицы для графа
+            int i, j, k;
+            fin >> i >> j >> k;
+            g[i][j] = k;
         }
+        fin.close();
 
-    bool f = true;  // флаг, сообщающий, что минимальный разрез уже выведен
-    for (int s = 0; f && s < n; ++s)
-        for (int t = s + 1; f && t < n; ++t) {
-            int flow = FordFulkerson(s, t); //аналогичный поиск максимального потока из вершины s в вершину t
-            if (flow == ans) { // поиск до минимального из максимальных потоков
-                cout << "Минимальное множество рёбер, удаление которых приведёт к потере связности графа:" << endl;
-                minCut(s); //вывод ребра
-                f = false; //минимальный разрез выведен, флаг в  false, чтобы больше ничего не искалось
+        int ans = INT_MAX;      //минимальный из максимальных потоков
+
+        for (int s = 0; s < n; ++s)
+            for (int t = s + 1; t < n; ++t) {
+                int flow = FordFulkerson(s, t); //поиск максимального потока из вершины s в вершину t
+                ans = min(ans, flow);   //выбор минимального из максимальных потоков
             }
-        }
 
-    delete_matrix(n, gf);
-    delete_matrix(n, g);
+        bool f = true;  // флаг, сообщающий, что минимальный разрез уже выведен
+        for (int s = 0; f && s < n; ++s)
+            for (int t = s + 1; f && t < n; ++t) {
+                int flow = FordFulkerson(s, t); //аналогичный поиск максимального потока из вершины s в вершину t
+                if (flow == ans) { // поиск до минимального из максимальных потоков
+                    gout << "Минимальное множество рёбер, удаление которых приведёт к потере связности графа:" << endl;
+                    minCut(s, gout); //вывод ребра
+                    f = false; //минимальный разрез выведен, флаг в  false, чтобы больше ничего не искалось
+                }
+            }
+  
+        
+        if (kol==0) gout << "Не существует";
+        cout << "\nРезультат записан в файл" << endl;
+        gout.close();
+
+        delete_matrix(n, gf);
+        delete_matrix(n, g);
+        
+    }
     system("pause");
     return 0;
 }
