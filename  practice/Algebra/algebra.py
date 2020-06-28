@@ -66,3 +66,5 @@ if os.path.exists(name_file1+ ".txt"):
         print("Результат записан в файл")
 else:
     print("Файл с входными данными не найден")
+
+system("pause")
