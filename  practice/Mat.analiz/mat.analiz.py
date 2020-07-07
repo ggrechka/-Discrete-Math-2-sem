@@ -85,3 +85,4 @@ while number != -1:
     number = select_function_number()
 
 print("До свидания!")
+system("pause")
