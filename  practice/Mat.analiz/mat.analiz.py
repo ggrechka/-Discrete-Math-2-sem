@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from os import system
-import os
 import matplotlib.pyplot as plt
 from numpy import exp, sqrt, sin, log, linspace, array, seterr, nanmin, \
     nanmax, inf
